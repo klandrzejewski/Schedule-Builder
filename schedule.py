@@ -1,4 +1,63 @@
 from tabulate import tabulate
+#README FIRST
+#We need to have a a constraint satisfaction algorithm
+#We should also add errors if the input is not in the correct format 
+
+class Classes:
+    classes = []
+    def __init__(self):
+        self.numClass = int(input("How many classes are you taking?\n"))
+        for i in range(self.numClass):
+            print(f"\nEnter details for Class {i+1}:")
+            name = input("Name of the class: ")
+            difficulty = input("Difficulty level (easy, medium, hard): ")
+            study_hours = float(input("Ideal number of hours to study per week: "))
+            self.classes.append({'name': name, 'difficulty': difficulty, 'study_hours': study_hours})
+
+    def display_classes(self):
+        print("\nYour classes and study goals:")
+        for i, cls in enumerate(self.classes):
+            print(f"Class {i+1}: {cls['name']}")
+            print(f"   Difficulty: {cls['difficulty']}")
+            print(f"   Ideal study hours per week: {cls['study_hours']}")
+
+
+class Blockers:
+    def __init__(self):
+        print("Let's set up your daily schedule.")
+        self.bedtime = input("When would you like to go to bed? (HH:MM AM/PM): ")
+        self.wakeup_time = input("When would you like to wake up? (HH:MM AM/PM): ")
+        self.classes = self.get_timings("class")
+        self.work = self.get_timings("work")
+        self.other_commitments = self.get_timings("other commitments")
+
+
+    def get_timings(self, activity):
+        num_timings = int(input(f"How many {activity} do you have? "))
+        timings = []
+        for i in range(num_timings):
+            start_time = input(f"Enter start time for {activity} {i+1} (HH:MM AM/PM): ")
+            end_time = input(f"Enter end time for {activity} {i+1} (HH:MM AM/PM): ")
+            days = input(f"Enter days for {activity} {i+1} (comma-separated, e.g., Mon, Wed, Fri): ").split(',')
+            timings.append({'start_time': start_time, 'end_time': end_time, 'days': days})
+        return timings
+
+    def display_schedule(self):
+        print("\nYour daily schedule:")
+        print(f"Bedtime: {self.bedtime}")
+        print(f"Wake-up time: {self.wakeup_time}")
+        self.display_activities("Classes", self.classes)
+        self.display_activities("Work", self.work)
+        self.display_activities("Other Commitments", self.other_commitments)
+
+    def display_activities(self, activity_name, activities):
+        print(f"\n{activity_name}:")
+        for i, activity in enumerate(activities, start=1):
+            print(f"{activity_name} {i}:")
+            print(f"   Start time: {activity['start_time']}")
+            print(f"   End time: {activity['end_time']}")
+            print(f"   Days: {', '.join(activity['days'])}")
+
 
 class Day:
     # Default schedule. Goes to bed at 11, wakes up at 7
@@ -45,9 +104,50 @@ class Week:
 
         print(tabulate(table, headers=headers, tablefmt="grid"))
 
+    
+    def edit(self):
+        print("Working on this")
+       
+
+
+
+
+def prompt(test):
+    print(" ")
+    print("Choose an action:")
+    action = input("Edit Timeslots      Provide Feedback       Print Schedule       Quit \n\n")
+    if action == "Print Schedule":
+        test.printWeek()
+        prompt()
+    elif action == "Edit Timeslots":
+        test.edit()
+        prompt()
+    elif action == "Provide Feedback":
+        print("Still working on this function")
+        prompt()
+    elif action == "Quit":
+        print("Exiting program")
+    else:
+        print("Invalid command")
+        prompt()
+
+def satisfyConstraints(week, classes):
+    print("This is where the algorithm will go")
+
+
+
+
+my_classes = Classes()
+my_classes.display_classes()
+my_blockers = Blockers()
+my_blockers.display_schedule()
 test = Week()
-test.printWeek()
-print("Done")
+satisfyConstraints(test, my_classes)
+
+prompt(test)
+
+
+
 
 
 

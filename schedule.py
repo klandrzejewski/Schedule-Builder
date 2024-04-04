@@ -8,8 +8,7 @@ class Day:
     def __init__(self, day):
         print("Creating day " + str(day))
         self.day = day
-        self.blocks = ["Sleep"] * 24
-        self.blocks[7] = None
+        self.blocks = [None] * 24
         self.blocks[8] = "Meal"
         self.blocks[9] = "Class"
         self.blocks[10] = "Class"
@@ -19,6 +18,14 @@ class Day:
         self.blocks[19] = "Work"
         self.blocks[20] = "Work"
         self.blocks[21] = "Work"
+        self.blocks[23] = "Sleep"
+        self.blocks[0] = "Sleep"
+        self.blocks[1] = "Sleep"
+        self.blocks[2] = "Sleep"
+        self.blocks[3] = "Sleep"
+        self.blocks[4] = "Sleep"
+        self.blocks[5] = "Sleep"
+        self.blocks[6] = "Sleep"
 
     def __str__(self):
         return "Day " + str(self.day)

@@ -1,3 +1,5 @@
+from tabulate import tabulate
+
 class Day:
     # Default schedule. Goes to bed at 11, wakes up at 7
     # class at nine, ten and 2
@@ -6,7 +8,6 @@ class Day:
     # 6 free blocks
 
     def __init__(self, day):
-        print("Creating day " + str(day))
         self.day = day
         self.blocks = [None] * 24
         self.blocks[8] = "Meal"
@@ -27,24 +28,27 @@ class Day:
         self.blocks[5] = "Sleep"
         self.blocks[6] = "Sleep"
 
-    def __str__(self):
-        return "Day " + str(self.day)
-
 class Week: 
     def __init__(self):
-        print("Initializing")
         self.week = [Day(day) for day in range(1, 8)]
 
     def printWeek(self):
+        table = []
         for day in self.week:
-            print("Blocks for", day)
-            for i, block in enumerate(day.blocks):
-                if block is not None:
-                    print(f"Block {i}: {block}")
-                else:
-                    print(f"Block {i}: None")
-            print()
+            row = [str(day.day)]
+            row.extend(day.blocks)
+            table.append(row)
+
+        headers = ["Day", "12:00am", "1:00am", "2:00am", "3:00am", "4:00am", "5:00am", "6:00am", "7:00am",
+                   "8:00am", "9:00am", "10:00am", "11:00am", "12:00pm", "1:00pm", "2:00pm", "3:00pm", "4:00pm",
+                   "5:00pm", "6:00pm", "7:00pm", "8:00pm", "9:00pm", "10:00pm", "11:00pm"]
+
+        print(tabulate(table, headers=headers, tablefmt="grid"))
 
 test = Week()
 test.printWeek()
 print("Done")
+
+
+
+

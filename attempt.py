@@ -1,51 +1,47 @@
 from tabulate import tabulate
-#README FIRST
-#We need to have a a constraint satisfaction algorithm
-#We should also add errors if the input is not in the correct format 
 
-class CSP: 
-	def __init__(self, variables, Domains,constraints): 
-		self.variables = variables 
-		self.domains = Domains 
-		self.constraints = constraints 
-		self.solution = None
+class CSP:
+    def __init__(self, variables, domains, constraints):
+        self.variables = variables
+        self.domains = domains
+        self.constraints = constraints
+        self.solution = None
 
-	def solve(self): 
-		assignment = {} 
-		self.solution = self.backtrack(assignment) 
-		return self.solution 
+    def solve(self):
+        assignment = {}
+        self.solution = self.backtrack(assignment)
+        return self.solution
 
-	def backtrack(self, assignment): 
-		if len(assignment) == len(self.variables): 
-			return assignment 
+    def backtrack(self, assignment):
+        if len(assignment) == len(self.variables):
+            return assignment
 
-		var = self.select_unassigned_variable(assignment) 
-		for value in self.order_domain_values(var, assignment): 
-			if self.is_consistent(var, value, assignment): 
-				assignment[var] = value 
-				result = self.backtrack(assignment) 
-				if result is not None: 
-					return result 
-				del assignment[var] 
-		return None
+        var = self.select_unassigned_variable(assignment)
+        for value in self.order_domain_values(var, assignment):
+            if self.is_consistent(var, value, assignment):
+                assignment[var] = value
+                result = self.backtrack(assignment)
+                if result is not None:
+                    return result
+                del assignment[var]
+        return None
 
-	def select_unassigned_variable(self, assignment): 
-		unassigned_vars = [var for var in self.variables if var not in assignment] 
-		return min(unassigned_vars, key=lambda var: len(self.domains[var])) 
+    def select_unassigned_variable(self, assignment):
+        unassigned_vars = [var for var in self.variables if var not in assignment]
+        return min(unassigned_vars, key=lambda var: len(self.domains[var]))
 
-	def order_domain_values(self, var, assignment): 
-		return self.domains[var] 
+    def order_domain_values(self, var, assignment):
+        return self.domains[var]
 
-	def is_consistent(self, var, value, assignment): 
-		for constraint_var in self.constraints[var]: 
-			if constraint_var in assignment and assignment[constraint_var] == value: 
-				return False
-		return True
-
+    def is_consistent(self, var, value, assignment):
+        for constraint_var in self.constraints[var]:
+            if constraint_var in assignment and assignment[constraint_var] == value:
+                return False
+        return True
 
 class Classes:
-    classes = []
     def __init__(self):
+        self.classes = []
         self.numClass = int(input("How many classes are you taking?\n"))
         for i in range(self.numClass):
             print(f"\nEnter details for Class {i+1}:")
@@ -61,7 +57,6 @@ class Classes:
             print(f"   Difficulty: {cls['difficulty']}")
             print(f"   Ideal study hours per week: {cls['study_hours']}")
 
-
 class Blockers:
     def __init__(self):
         print("Let's set up your daily schedule.")
@@ -70,7 +65,6 @@ class Blockers:
         self.classes = self.get_timings("class")
         self.work = self.get_timings("work")
         self.other_commitments = self.get_timings("other commitments")
-
 
     def get_timings(self, activity):
         num_timings = int(input(f"How many {activity} do you have? "))
@@ -98,14 +92,7 @@ class Blockers:
             print(f"   End time: {activity['end_time']}")
             print(f"   Days: {', '.join(activity['days'])}")
 
-
 class Day:
-    # Default schedule. Goes to bed at 11, wakes up at 7
-    # class at nine, ten and 2
-    # Meals at 8, noon, and 6
-    # work from 7-9
-    # 6 free blocks
-
     def __init__(self, day):
         self.day = day
         self.blocks = [None] * 24
@@ -127,7 +114,7 @@ class Day:
         self.blocks[5] = "Sleep"
         self.blocks[6] = "Sleep"
 
-class Week: 
+class Week:
     def __init__(self):
         self.week = [Day(day) for day in range(1, 8)]
 
@@ -144,13 +131,8 @@ class Week:
 
         print(tabulate(table, headers=headers, tablefmt="grid"))
 
-    
     def edit(self):
         print("Working on this")
-       
-
-
-
 
 def prompt(test):
     print(" ")
@@ -158,23 +140,51 @@ def prompt(test):
     action = input("Edit Timeslots      Provide Feedback       Print Schedule       Quit \n\n")
     if action == "Print Schedule":
         test.printWeek()
-        prompt()
+        prompt(test)
     elif action == "Edit Timeslots":
         test.edit()
-        prompt()
+        prompt(test)
     elif action == "Provide Feedback":
         print("Still working on this function")
-        prompt()
+        prompt(test)
     elif action == "Quit":
         print("Exiting program")
     else:
         print("Invalid command")
-        prompt()
+        prompt(test)
 
-def satisfyConstraints(week, classes):
-    print("This is where the algorithm will go")
+def satisfyConstraints(week, classes, blockers):
+    variables = [(day, hour) for day in range(1, 8) for hour in range(24)]
+    domains = {var: {'Sleep', 'Work', 'Meal', 'Class', 'Other'} for var in variables}
+    constraints = {}
+    
+    # Define constraints to ensure activities don't overlap and respect user's input
+    for day in range(1, 8):
+        for hour in range(24):
+            var = (day, hour)
+            constraints[var] = []
+            for i in range(-1, 2):
+                for j in range(-1, 2):
+                    neighbor = (day + i, hour + j)
+                    if neighbor != var and neighbor in variables:
+                        constraints[var].append(neighbor)
+                        
+    # Add constraints based on class timings, work hours, and other commitments
+    for class_info in blockers.classes:
+        for day, activity in enumerate(week.week):
+            for hour, block in enumerate(activity.blocks):
+                if (block == "Class" and str(day + 1) in class_info['days'] and
+                        class_info['start_time'] <= blockers.classes[0]['start_time'] and
+                        class_info['end_time'] >= blockers.classes[0]['end_time']):
+                    constraints[(day + 1, hour)] = [block]
 
-
+    # Implement the CSP algorithm to generate a feasible schedule
+    csp = CSP(variables, domains, constraints)
+    schedule = csp.solve()
+    
+    # Update the week object with the generated schedule
+    for (day, hour), activity in schedule.items():
+        week.week[day - 1].blocks[hour] = activity
 
 
 my_classes = Classes()
@@ -182,10 +192,8 @@ my_classes.display_classes()
 my_blockers = Blockers()
 my_blockers.display_schedule()
 test = Week()
-satisfyConstraints(test, my_classes)
-
+satisfyConstraints(test, my_classes, my_blockers)
 prompt(test)
-
 
 
 

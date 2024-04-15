@@ -180,8 +180,33 @@ def convertTime(time):
 
     return hour
 
-# Create a 2D array with 7 rows and 24 columns filled with zeros
+def convertDays(dayOrig):
+    days = []
+    for day in dayOrig:
+        day = day.strip().lower()  
+        if day == 'sun' or day == 'sunday':
+            days.append(1)
+        elif day == 'mon' or day == 'monday':
+            days.append(2)
+        elif day == 'tues' or day == 'tuesday':
+            days.append(3)
+        elif day == 'wed' or day == 'wednesday':
+            days.append(4)
+        elif day == 'thurs' or day == 'thursday':
+            days.append(5)
+        elif day == 'fri' or day == 'friday':
+            days.append(6)
+        elif day == 'sat' or day == 'saturday':
+            days.append(7)
+        else:
+            # Warning 
+            pass
+
+    return days
+
+# Create arrays for the schedule with 24 hours and 7 days
 schedule = [[0 for _ in range(24)] for _ in range(7)]
+scheduleWords = [[0 for _ in range(24)] for _ in range(7)]
 
 # Print the array
 #for row in schedule:
@@ -198,11 +223,25 @@ bedtime = convertTime(my_blockers.bedtime)
 waketime = convertTime(my_blockers.wakeup_time)
 timeBed = 24-bedtime
 
+worktimeStart = convertTime(my_blockers.work[0]['start_time'])
+worktimeEnd = convertTime(my_blockers.work[0]['end_time'])
+timeWork = worktimeEnd - worktimeStart
+
+worktimeDays = convertDays(my_blockers.work[0]['days'])
+
+# Fix if bedtime is post midnight
 for i in range(7): 
     for j in range(timeBed):
         schedule[i][bedtime+j] = 1
+        scheduleWords[i][bedtime+j] = "Sleep"
     for k in range(waketime):
         schedule[i][k] = 1  
+        scheduleWords[i][k] = "Sleep"
+
+for i in worktimeDays:
+    for l in range(timeWork):
+        schedule[i-1][worktimeStart+l] = 2
+        scheduleWords[i-1][worktimeStart+l] = "Work"
  
 for row in schedule:
     print(row)
@@ -214,7 +253,7 @@ variables = [(i, j) for i in range(7) for j in range(24)]
 
 classNum = 2
 
-# Domains
+# Domains: sleep = 1, work = 2, class = 3, other = 4, study = 5+
 Domains = {var: set(range(1, classNum+1)) if schedule[var[0]][var[1]] == 0
 						else {schedule[var[0]][var[1]]} for var in variables} 
 

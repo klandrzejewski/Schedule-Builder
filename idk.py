@@ -3,45 +3,8 @@ from tabulate import tabulate
 #We need to have a a constraint satisfaction algorithm
 #We should also add errors if the input is not in the correct format 
 
-class CSP: 
-	def __init__(self, variables, Domains,constraints): 
-		self.variables = variables 
-		self.domains = Domains 
-		self.constraints = constraints 
-		self.solution = None
-
-	def solve(self): 
-		assignment = {} 
-		self.solution = self.backtrack(assignment) 
-		return self.solution 
-
-	def backtrack(self, assignment): 
-		if len(assignment) == len(self.variables): 
-			return assignment 
-
-		var = self.select_unassigned_variable(assignment) 
-		for value in self.order_domain_values(var, assignment): 
-			if self.is_consistent(var, value, assignment): 
-				assignment[var] = value 
-				result = self.backtrack(assignment) 
-				if result is not None: 
-					return result 
-				del assignment[var] 
-		return None
-
-	def select_unassigned_variable(self, assignment): 
-		unassigned_vars = [var for var in self.variables if var not in assignment] 
-		return min(unassigned_vars, key=lambda var: len(self.domains[var])) 
-
-	def order_domain_values(self, var, assignment): 
-		return self.domains[var] 
-
-	def is_consistent(self, var, value, assignment): 
-		for constraint_var in self.constraints[var]: 
-			if constraint_var in assignment and assignment[constraint_var] == value: 
-				return False
-		return True
-
+# Ok so what we need to work on right now is above the line "prompt(test)" we need
+# to change the schedule array to have their sleep times, work, classes and what not
 
 class Classes:
     classes = []
@@ -60,7 +23,6 @@ class Classes:
             print(f"Class {i+1}: {cls['name']}")
             print(f"   Difficulty: {cls['difficulty']}")
             print(f"   Ideal study hours per week: {cls['study_hours']}")
-
 
 class Blockers:
     def __init__(self):
@@ -97,7 +59,6 @@ class Blockers:
             print(f"   Start time: {activity['start_time']}")
             print(f"   End time: {activity['end_time']}")
             print(f"   Days: {', '.join(activity['days'])}")
-
 
 class Day:
     # Default schedule. Goes to bed at 11, wakes up at 7
@@ -147,22 +108,60 @@ class Week:
     
     def edit(self):
         print("Working on this")
-       
+ 
+class CSP: 
+	def __init__(self, variables, Domains,constraints): 
+		self.variables = variables 
+		self.domains = Domains 
+		self.constraints = constraints 
+		self.solution = None
+
+	def solve(self): 
+		assignment = {} 
+		self.solution = self.backtrack(assignment) 
+		return self.solution 
+
+	def backtrack(self, assignment): 
+		if len(assignment) == len(self.variables): 
+			return assignment 
+
+		var = self.select_unassigned_variable(assignment) 
+		for value in self.order_domain_values(var, assignment): 
+			if self.is_consistent(var, value, assignment): 
+				assignment[var] = value 
+				result = self.backtrack(assignment) 
+				if result is not None: 
+					return result 
+				del assignment[var] 
+		return None
+
+	def select_unassigned_variable(self, assignment): 
+		unassigned_vars = [var for var in self.variables if var not in assignment] 
+		return min(unassigned_vars, key=lambda var: len(self.domains[var])) 
+
+	def order_domain_values(self, var, assignment): 
+		return self.domains[var] 
+
+	def is_consistent(self, var, value, assignment): 
+		for constraint_var in self.constraints[var]: 
+			if constraint_var in assignment and assignment[constraint_var] == value: 
+				return False
+		return True
 
 def prompt(test):
     print(" ")
     print("Choose an action:")
-    action = input("Edit Timeslots      Provide Feedback       Print Schedule       Quit \n\n")
-    if action == "Print Schedule":
+    action = input("(1) Edit Timeslots    (2) Provide Feedback    (3) Print Schedule    (4) Quit \n\n")
+    if action == "Print Schedule" or action == "1":
         test.printWeek()
         prompt()
-    elif action == "Edit Timeslots":
+    elif action == "Edit Timeslots" or action == "2":
         test.edit()
         prompt()
-    elif action == "Provide Feedback":
+    elif action == "Provide Feedback" or action == "3":
         print("Still working on this function")
         prompt()
-    elif action == "Quit":
+    elif action == "Quit" or action == "4":
         print("Exiting program")
     else:
         print("Invalid command")
@@ -171,21 +170,80 @@ def prompt(test):
 def satisfyConstraints(week, classes):
     print("This is where the algorithm will go")
 
+def convertTime(time):
+    pm = 'PM' in time
+    time = time.replace('AM', '').replace('PM', '')
+    hour, minute = map(int, time.split(":"))
 
+    if pm and hour != 12:
+        hour += 12
 
+    return hour
 
+# Create a 2D array with 7 rows and 24 columns filled with zeros
+schedule = [[0 for _ in range(24)] for _ in range(7)]
+
+# Print the array
+#for row in schedule:
+    #print(row)
 my_classes = Classes()
 my_classes.display_classes()
 my_blockers = Blockers()
 my_blockers.display_schedule()
 test = Week()
-satisfyConstraints(test, my_classes)
+#satisfyConstraints(test, my_classes)
+
+
+bedtime = convertTime(my_blockers.bedtime)
+waketime = convertTime(my_blockers.wakeup_time)
+timeBed = 24-bedtime
+
+for i in range(7): 
+    for j in range(timeBed):
+        schedule[i][bedtime+j] = 1
+    for k in range(waketime):
+        schedule[i][k] = 1  
+ 
+for row in schedule:
+    print(row)
 
 prompt(test)
+	
+# Variables 
+variables = [(i, j) for i in range(7) for j in range(24)] 
 
+classNum = 2
 
+# Domains
+Domains = {var: set(range(1, classNum+1)) if schedule[var[0]][var[1]] == 0
+						else {schedule[var[0]][var[1]]} for var in variables} 
 
+def add_constraint(var): 
+    constraints[var] = [] 
+    for i in range(7): 
+        # No two study sessions can occur at the same time
+        if i != var[0]:
+            constraints[var].append((i, var[1]))
+    # No two study sessions for the same subject on the same day
+    current_day_schedule = schedule[var[0]]  
+    if var[1] in current_day_schedule:
+        for time_slot in current_day_schedule[var[1]]:
+            if time_slot != var:
+                constraints[var].append(time_slot)
+                  
+constraints = {} 
+for i in range(7): 
+    for j in range(24): 
+        add_constraint((i, j)) 
 
+csp = CSP(variables, Domains, constraints) 
+sol = csp.solve() 
 
+solution = [[0 for i in range(24)] for i in range(7)] 
+for i,j in sol: 
+	solution[i][j]=sol[i,j] 
+	
+for row in solution:
+    print(row)
 
-
+          

@@ -3,46 +3,6 @@ from tabulate import tabulate
 #We need to have a a constraint satisfaction algorithm
 #We should also add errors if the input is not in the correct format 
 
-class CSP: 
-	def __init__(self, variables, Domains,constraints): 
-		self.variables = variables 
-		self.domains = Domains 
-		self.constraints = constraints 
-		self.solution = None
-
-	def solve(self): 
-		assignment = {} 
-		self.solution = self.backtrack(assignment) 
-		return self.solution 
-
-	def backtrack(self, assignment): 
-		if len(assignment) == len(self.variables): 
-			return assignment 
-
-		var = self.select_unassigned_variable(assignment) 
-		for value in self.order_domain_values(var, assignment): 
-			if self.is_consistent(var, value, assignment): 
-				assignment[var] = value 
-				result = self.backtrack(assignment) 
-				if result is not None: 
-					return result 
-				del assignment[var] 
-		return None
-
-	def select_unassigned_variable(self, assignment): 
-		unassigned_vars = [var for var in self.variables if var not in assignment] 
-		return min(unassigned_vars, key=lambda var: len(self.domains[var])) 
-
-	def order_domain_values(self, var, assignment): 
-		return self.domains[var] 
-
-	def is_consistent(self, var, value, assignment): 
-		for constraint_var in self.constraints[var]: 
-			if constraint_var in assignment and assignment[constraint_var] == value: 
-				return False
-		return True
-
-
 class Classes:
     classes = []
     def __init__(self):
@@ -60,7 +20,6 @@ class Classes:
             print(f"Class {i+1}: {cls['name']}")
             print(f"   Difficulty: {cls['difficulty']}")
             print(f"   Ideal study hours per week: {cls['study_hours']}")
-
 
 class Blockers:
     def __init__(self):
@@ -97,7 +56,6 @@ class Blockers:
             print(f"   Start time: {activity['start_time']}")
             print(f"   End time: {activity['end_time']}")
             print(f"   Days: {', '.join(activity['days'])}")
-
 
 class Day:
     # Default schedule. Goes to bed at 11, wakes up at 7
@@ -147,22 +105,21 @@ class Week:
     
     def edit(self):
         print("Working on this")
-       
-
+ 
 def prompt(test):
     print(" ")
     print("Choose an action:")
-    action = input("Edit Timeslots      Provide Feedback       Print Schedule       Quit \n\n")
-    if action == "Print Schedule":
+    action = input("(1) Edit Timeslots    (2) Provide Feedback    (3) Print Schedule    (4) Quit \n\n")
+    if action == "Print Schedule" or action == "1":
         test.printWeek()
         prompt()
-    elif action == "Edit Timeslots":
+    elif action == "Edit Timeslots" or action == "2":
         test.edit()
         prompt()
-    elif action == "Provide Feedback":
+    elif action == "Provide Feedback" or action == "3":
         print("Still working on this function")
         prompt()
-    elif action == "Quit":
+    elif action == "Quit" or action == "4":
         print("Exiting program")
     else:
         print("Invalid command")
@@ -170,9 +127,7 @@ def prompt(test):
 
 def satisfyConstraints(week, classes):
     print("This is where the algorithm will go")
-
-
-
+	
 
 my_classes = Classes()
 my_classes.display_classes()
@@ -183,9 +138,86 @@ satisfyConstraints(test, my_classes)
 
 prompt(test)
 
+# Create a 2D array with 7 rows and 24 columns filled with zeros
+schedule = [[0 for _ in range(24)] for _ in range(7)]
 
+# Print the array
+for row in schedule:
+    print(row)
 
+class CSP: 
+	def __init__(self, variables, Domains,constraints): 
+		self.variables = variables 
+		self.domains = Domains 
+		self.constraints = constraints 
+		self.solution = None
 
+	def solve(self): 
+		assignment = {} 
+		self.solution = self.backtrack(assignment) 
+		return self.solution 
 
+	def backtrack(self, assignment): 
+		if len(assignment) == len(self.variables): 
+			return assignment 
 
+		var = self.select_unassigned_variable(assignment) 
+		for value in self.order_domain_values(var, assignment): 
+			if self.is_consistent(var, value, assignment): 
+				assignment[var] = value 
+				result = self.backtrack(assignment) 
+				if result is not None: 
+					return result 
+				del assignment[var] 
+		return None
 
+	def select_unassigned_variable(self, assignment): 
+		unassigned_vars = [var for var in self.variables if var not in assignment] 
+		return min(unassigned_vars, key=lambda var: len(self.domains[var])) 
+
+	def order_domain_values(self, var, assignment): 
+		return self.domains[var] 
+
+	def is_consistent(self, var, value, assignment): 
+		for constraint_var in self.constraints[var]: 
+			if constraint_var in assignment and assignment[constraint_var] == value: 
+				return False
+		return True
+	
+	
+# Variables 
+variables = [(i, j) for i in range(7) for j in range(24)] 
+
+# Domains - Class = 1 
+Domains = {var: set(range(1, 10)) if schedule[var[0]][var[1]] == 0
+						else {schedule[var[0]][var[1]]} for var in variables} 
+
+# Add contraint 
+def add_constraint(var): 
+	constraints[var] = [] 
+	for i in range(9): 
+		if i != var[0]: 
+			constraints[var].append((i, var[1])) 
+		if i != var[1]: 
+			constraints[var].append((var[0], i)) 
+	sub_i, sub_j = var[0] // 3, var[1] // 3
+	for i in range(sub_i * 3, (sub_i + 1) * 3): 
+		for j in range(sub_j * 3, (sub_j + 1) * 3): 
+			if (i, j) != var: 
+				constraints[var].append((i, j)) 
+# constraints		 
+constraints = {} 
+for i in range(9): 
+	for j in range(9): 
+		add_constraint((i, j)) 
+		
+# Solution 
+print('*'*7,'Solution','*'*7) 
+csp = CSP(variables, Domains, constraints) 
+sol = csp.solve() 
+
+solution = [[0 for i in range(24)] for i in range(7)] 
+for i,j in sol: 
+	solution[i][j]=sol[i,j] 
+	
+print_sudoku(solution)

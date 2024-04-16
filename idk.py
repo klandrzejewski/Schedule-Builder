@@ -303,7 +303,79 @@ classNum = index2+1
 Domains = {var: set(range(5, classNum+1)) if schedule[var[0]][var[1]] == 0
 						else {schedule[var[0]][var[1]]} for var in variables} 
 
+# Store how long to study for each class
+classHours = []
+for i in range(index2):
+    classHours.append(my_classes.classes[i]['study_hours'])
+
+# Add contraint 
 def add_constraint(var): 
+    constraints[var] = [] 
+    for i in range(9): 
+        if i != var[0]: 
+            constraints[var].append((i, var[1])) 
+
+def add_constraintWrong(var):
+    constraints[var] = []
+    current_day = var[0]
+    current_hour = var[1]
+
+    # No two study sessions can occur at the same time
+    for i in range(7):
+        if i != current_day:
+            constraints[var].append((i, current_hour))
+
+    # No more than 3 hours for one class each day
+    #if schedule[current_day][current_hour] == 3:  # Assuming class activity is represented by 3 in the schedule array
+        #class_hour_count = sum(1 for hour in range(24) if schedule[current_day][hour] == 3)
+        #if class_hour_count >= 3:
+            #constraints[var].append(var)
+
+    # No two sessions for the same subject on the same day
+    for hour, activity in enumerate(schedule[current_day]):
+        if hour != current_hour and activity == 3 and schedule[current_day][hour] == schedule[current_day][current_hour]:
+            constraints[var].append((current_day, hour))
+
+    # No two sessions can occur at the same time
+    for hour, activity in enumerate(schedule[current_day]):
+        if hour != current_hour and activity != 0:
+            constraints[var].append((current_day, hour))
+
+
+def add_constraintWords(var):
+    constraints[var] = []
+    current_day = var[0]
+    current_hour = var[1]
+
+    # No two study sessions can occur at the same time
+    for i in range(7):
+        if i != current_day:
+            constraints[var].append((i, current_hour))
+
+    # No more than 3 hours for one class each day
+    if scheduleWords[current_day][current_hour].startswith("Class"):
+        class_num = int(scheduleWords[current_day][current_hour].split()[1]) - 1
+        class_hour_count = 0
+        for hour in range(24):
+            if scheduleWords[current_day][hour].startswith("Class " + str(class_num + 1)):
+                class_hour_count += 1
+        if class_hour_count >= 3:
+            constraints[var].append(var)
+
+    # No two sessions for the same subject on the same day
+    current_day_schedule_words = scheduleWords[current_day]
+    for hour, activity in enumerate(current_day_schedule_words):
+        if hour != current_hour and activity.startswith("Class"):
+            class_num = int(activity.split()[1]) - 1
+            if class_num == int(scheduleWords[current_day][current_hour].split()[1]) - 1:
+                constraints[var].append((current_day, hour))
+
+    # No two sessions can occur at the same time
+    for hour, activity in enumerate(current_day_schedule_words):
+        if hour != current_hour and activity != 0:
+            constraints[var].append((current_day, hour))
+
+def add_constraintOrig(var): 
     constraints[var] = [] 
     for i in range(7): 
         # No two study sessions can occur at the same time
@@ -315,6 +387,41 @@ def add_constraint(var):
         for time_slot in current_day_schedule[var[1]]:
             if time_slot != var:
                 constraints[var].append(time_slot)
+
+def add_constraint2(var):
+    constraints[var] = []
+    current_day = var[0]
+    current_hour = var[1]
+
+    # No two study sessions can occur at the same time
+    for i in range(7):
+        if i != current_day:
+            constraints[var].append((i, current_hour))
+
+    # No more than 3 hours for one class each day
+    if scheduleWords[current_day][current_hour].startswith("Class"):
+        class_num = int(scheduleWords[current_day][current_hour].split()[1]) - 1
+        class_hour_count = 0
+        for hour in range(24):
+            if scheduleWords[current_day][hour].startswith("Class " + str(class_num + 1)):
+                class_hour_count += 1
+        if class_hour_count >= 3:
+            constraints[var].append(var)
+
+    # No two sessions for the same subject on the same day
+    current_day_schedule = schedule[current_day]
+    for hour, activity in enumerate(current_day_schedule):
+        if activity.startswith("Class"):
+            class_num = int(activity.split()[1]) - 1
+            if hour != current_hour:
+                constraints[var].append((current_day, hour))
+
+    # No two sessions can occur at the same time
+    current_day_schedule_words = scheduleWords[current_day]
+    for hour, activity in enumerate(current_day_schedule_words):
+        if hour != current_hour and activity != 0:
+            constraints[var].append((current_day, hour))
+
                   
 constraints = {} 
 for i in range(7): 

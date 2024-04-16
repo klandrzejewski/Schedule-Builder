@@ -223,11 +223,44 @@ bedtime = convertTime(my_blockers.bedtime)
 waketime = convertTime(my_blockers.wakeup_time)
 timeBed = 24-bedtime
 
-worktimeStart = convertTime(my_blockers.work[0]['start_time'])
-worktimeEnd = convertTime(my_blockers.work[0]['end_time'])
-timeWork = worktimeEnd - worktimeStart
+worktimeStart = []
+worktimeEnd = []
+timeWork = []
+worktimeDays = []
+index = 0
+for work in my_blockers.work:     
+    worktimeStart.append(convertTime(work['start_time']))
+    worktimeEnd.append(convertTime(work['end_time']))
+    timeWork.append(worktimeEnd[index] - worktimeStart[index])
+    worktimeDays.append(convertDays(work['days']))
+    index += 1
 
-worktimeDays = convertDays(my_blockers.work[0]['days'])
+
+classtimeStart = []
+classtimeEnd = []
+timeClass = []
+classtimeDays = []
+index2 = 0
+
+for classes in my_blockers.classes:     
+    classtimeStart.append(convertTime(classes['start_time']))
+    classtimeEnd.append(convertTime(classes['end_time']))
+    timeClass.append(classtimeEnd[index2] - classtimeStart[index2])
+    classtimeDays.append(convertDays(classes['days']))
+    index2 += 1
+
+othertimeStart = []
+othertimeEnd = []
+timeOther = []
+othertimeDays = []
+index3 = 0
+
+for other in my_blockers.other_commitments:     
+    othertimeStart.append(convertTime(other['start_time']))
+    othertimeEnd.append(convertTime(other['end_time']))
+    timeOther.append(othertimeEnd[index3] - othertimeStart[index3])
+    othertimeDays.append(convertDays(other['days']))
+    index3 += 1
 
 # Fix if bedtime is post midnight
 for i in range(7): 
@@ -238,12 +271,25 @@ for i in range(7):
         schedule[i][k] = 1  
         scheduleWords[i][k] = "Sleep"
 
-for i in worktimeDays:
-    for l in range(timeWork):
-        schedule[i-1][worktimeStart+l] = 2
-        scheduleWords[i-1][worktimeStart+l] = "Work"
+for work in range(index):
+    for i in worktimeDays[work]:
+        for l in range(timeWork[work]):
+            schedule[i-1][worktimeStart[work]+l] = 2
+            scheduleWords[i-1][worktimeStart[work]+l] = "Work " + str(work+1)
+
+for classes in range(index2):
+    for i in classtimeDays[classes]:
+        for l in range(timeClass[classes]):
+            schedule[i-1][classtimeStart[classes]+l] = 3
+            scheduleWords[i-1][classtimeStart[classes]+l] = "Class " + str(classes+1)
+
+for other in range(index3):
+    for i in othertimeDays[other]:
+        for l in range(timeOther[other]):
+            schedule[i-1][othertimeStart[other]+l] = 3
+            scheduleWords[i-1][othertimeStart[other]+l] = "Other " + str(other+1)
  
-for row in schedule:
+for row in scheduleWords:
     print(row)
 
 prompt(test)
@@ -251,10 +297,10 @@ prompt(test)
 # Variables 
 variables = [(i, j) for i in range(7) for j in range(24)] 
 
-classNum = 2
+classNum = index2+1
 
 # Domains: sleep = 1, work = 2, class = 3, other = 4, study = 5+
-Domains = {var: set(range(1, classNum+1)) if schedule[var[0]][var[1]] == 0
+Domains = {var: set(range(5, classNum+1)) if schedule[var[0]][var[1]] == 0
 						else {schedule[var[0]][var[1]]} for var in variables} 
 
 def add_constraint(var): 

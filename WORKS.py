@@ -110,10 +110,10 @@ class Week:
         print("Working on this")
  
 class CSP: 
-	def __init__(self, variables, Domains,constraints): 
+	def __init__(self, variables, Domains,classHour): 
 		self.variables = variables 
 		self.domains = Domains 
-		self.constraints = constraints 
+		self.classHour = classHour
 		self.solution = None
 
 	def solve(self): 
@@ -140,13 +140,44 @@ class CSP:
 		return min(unassigned_vars, key=lambda var: len(self.domains[var])) 
 
 	def order_domain_values(self, var, assignment): 
-		return self.domains[var] 
+		domain_values = self.domains[var]
 
-	def is_consistent(self, var, value, assignment): 
-		for constraint_var in self.constraints[var]: 
-			if constraint_var in assignment and assignment[constraint_var] == value: 
+        # Separate values >= 5 from other values
+		greater_than_five = [value for value in domain_values if value >= 5]
+		other_values = [value for value in domain_values if value < 5]
+
+        # Combine the two lists with the ones >= 5 first
+		ordered_values = greater_than_five + other_values
+		
+		return ordered_values
+		#return self.domains[var] 
+
+	def is_consistentOldButKinda(self, var, value, assignment): 
+		for index, class_value in enumerate(self.classHour):
+			class_hour_count = 0			
+			for var, value in assignment.items():
+				if value == (index+5):
+					class_hour_count += 1
+			#class_hour_count = sum(1 for i in  if assignment[i] == (index+5))
+			#print(class_hour_count)
+			#print(value)
+			if class_hour_count > class_value:
 				return False
 		return True
+     
+	def is_consistent(self, var, value, assignment):
+        # Copy the assignment into a new one and add in the value
+		updated = assignment.copy()
+		updated[var] = value
+
+        # Go over each class hour
+		for index, limit in enumerate(self.classHour):
+			class_hour_count = sum(1 for assigned_value in updated.values() if assigned_value == (index + 5))
+			if class_hour_count > limit:
+				return False
+
+		return True
+
 
 def prompt(test):
     print(" ")
@@ -288,19 +319,25 @@ for other in range(index3):
         for l in range(timeOther[other]):
             schedule[i-1][othertimeStart[other]+l] = 3
             scheduleWords[i-1][othertimeStart[other]+l] = "Other " + str(other+1)
- 
-for row in scheduleWords:
-    print(row)
+
+className = []
+classHour = []
+for num in my_classes.classes:
+     className.append(num['name'])
+     classHour.append(num['study_hours'])
+
+#for row in scheduleWords:
+    #print(row)
 
 prompt(test)
 	
 # Variables 
 variables = [(i, j) for i in range(7) for j in range(24)] 
 
-classNum = index2+1
+classNum = my_classes.numClass + 5
 
-# Domains: sleep = 1, work = 2, class = 3, other = 4, study = 5+
-Domains = {var: set(range(5, classNum+1)) if schedule[var[0]][var[1]] == 0
+# Domains: sleep = 1, work = 2, class = 3, other = 4, study = 5+ set(range(5, classNum+1)) 
+Domains = {var: set(range(5, classNum)) | set([0]) if schedule[var[0]][var[1]] == 0
 						else {schedule[var[0]][var[1]]} for var in variables} 
 
 # Store how long to study for each class
@@ -308,12 +345,56 @@ classHours = []
 for i in range(index2):
     classHours.append(my_classes.classes[i]['study_hours'])
 
-# Add contraint 
-def add_constraint(var): 
+def add_constraint(var):
+     index = 1
+
+def add_constraint2(var): 
     constraints[var] = [] 
-    for i in range(9): 
+    current_day = var[0]
+    current_hour = var[1]
+
+    # No two study sessions can occur at the same time
+    for i in range(7):
+        if i != current_day:
+            constraints[var].append((i, current_hour))
+
+    # No more than specified hours for one class each day
+    if schedule[current_day][current_hour] == 3:  # Assuming class activity is represented by 3 in the schedule array
+        class_hour_count = sum(1 for hour in range(24) if schedule[current_day][hour] == 3)
+        if class_hour_count >= classHour[scheduleWords[current_day][current_hour] - 1]:
+            constraints[var].append(var)
+
+    # No two sessions for the same subject on the same day
+    current_day_schedule = schedule[current_day]
+    for hour, activity in enumerate(current_day_schedule):
+        if hour != current_hour and activity == 3 and schedule[current_day][hour] == schedule[current_day][current_hour]:
+            constraints[var].append((current_day, hour))
+
+    # No two sessions can occur at the same time
+    for hour, activity in enumerate(current_day_schedule):
+        if hour != current_hour and activity != 0:
+            constraints[var].append((current_day, hour))
+
+# Add contraint 
+def add_constraintOrig2(var): 
+    constraints[var] = [] 
+    for i in range(7): 
         if i != var[0]: 
             constraints[var].append((i, var[1])) 
+
+# Add contraint 
+def add_constraint1(var): 
+	constraints[var] = [] 
+	for i in range(9): 
+		if i != var[0]: 
+			constraints[var].append((i, var[1])) 
+		if i != var[1]: 
+			constraints[var].append((var[0], i)) 
+	sub_i, sub_j = var[0] // 3, var[1] // 3
+	for i in range(sub_i * 3, (sub_i + 1) * 3): 
+		for j in range(sub_j * 3, (sub_j + 1) * 3): 
+			if (i, j) != var: 
+				constraints[var].append((i, j)) 
 
 def add_constraintWrong(var):
     constraints[var] = []
@@ -428,14 +509,19 @@ for i in range(7):
     for j in range(24): 
         add_constraint((i, j)) 
 
-csp = CSP(variables, Domains, constraints) 
+#csp = CSP(variables, Domains, constraints) 
+csp = CSP(variables, Domains, classHour) 
 sol = csp.solve() 
 
 solution = [[0 for i in range(24)] for i in range(7)] 
 for i,j in sol: 
-	solution[i][j]=sol[i,j] 
+    if (sol[i,j] >= 5): 
+        scheduleWords[i][j] = "Study " + str(className[sol[i,j]-5])
+    elif (sol[i,j] == 0):
+         scheduleWords[i][j] = " "
+    solution[i][j]=sol[i,j] 
 	
-for row in solution:
+for row in scheduleWords:
     print(row)
 
           

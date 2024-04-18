@@ -9,7 +9,7 @@ from tabulate import tabulate
 class Classes:
     classes = []
     def __init__(self):
-        self.numClass = int(input("How many classes are you taking?\n"))
+        self.numClass = int(input("How many classes do you want to study for?\n"))
         for i in range(self.numClass):
             print(f"\nEnter details for Class {i+1}:")
             name = input("Name of the class: ")
@@ -30,7 +30,7 @@ class Blockers:
         self.bedtime = input("When would you like to go to bed? (HH:MM AM/PM): ")
         self.wakeup_time = input("When would you like to wake up? (HH:MM AM/PM): ")
         self.classes = self.get_timings("class")
-        self.work = self.get_timings("work")
+        self.work = self.get_timings("work shift")
         self.other_commitments = self.get_timings("other commitments")
 
 
@@ -67,32 +67,15 @@ class Day:
     # work from 7-9
     # 6 free blocks
 
-    def __init__(self, day):
+    def __init__(self, day, schedule):
         self.day = day
-        self.blocks = [None] * 24
-        self.blocks[8] = "Meal"
-        self.blocks[9] = "Class"
-        self.blocks[10] = "Class"
-        self.blocks[12] = "Meal"
-        self.blocks[14] = "Class"
-        self.blocks[18] = "Meal"
-        self.blocks[19] = "Work"
-        self.blocks[20] = "Work"
-        self.blocks[21] = "Work"
-        self.blocks[23] = "Sleep"
-        self.blocks[0] = "Sleep"
-        self.blocks[1] = "Sleep"
-        self.blocks[2] = "Sleep"
-        self.blocks[3] = "Sleep"
-        self.blocks[4] = "Sleep"
-        self.blocks[5] = "Sleep"
-        self.blocks[6] = "Sleep"
+        self.blocks = schedule
 
 class Week: 
-    def __init__(self):
-        self.week = [Day(day) for day in range(1, 8)]
+    def __init__(self, schedule):
+        self.week = [Day(day, schedule[day-1]) for day in range(1, 8)]
 
-    def printWeek(self):
+    def printWeek(self, value):
         table = []
         for day in self.week:
             row = [str(day.day)]
@@ -104,6 +87,9 @@ class Week:
                    "5:00pm", "6:00pm", "7:00pm", "8:00pm", "9:00pm", "10:00pm", "11:00pm"]
 
         print(tabulate(table, headers=headers, tablefmt="grid"))
+        if value == 1:
+            with open("schedule.txt", "w") as file:
+                file.write(tabulate(table, headers=headers, tablefmt="grid"))
 
     
     def edit(self):
@@ -168,23 +154,23 @@ class CSP:
 def prompt(test):
     print(" ")
     print("Choose an action:")
-    action = input("(1) Edit Timeslots    (2) Provide Feedback    (3) Print Schedule    (4) Quit \n\n")
-    if action == "Print Schedule" or action == "1":
-        test.printWeek()
-        prompt()
-    elif action == "Edit Timeslots" or action == "2":
+    action = input("(1) Edit Timeslots    (2) Provide Feedback    (3) Print Schedule to File   (4) Quit \n\n")
+    if action == "Print Schedule" or action == "3":
+        test.printWeek(1)
+        prompt(test)
+    elif action == "Edit Timeslots" or action == "1":
         test.edit()
-        prompt()
-    elif action == "Provide Feedback" or action == "3":
+        prompt(test)
+    elif action == "Provide Feedback" or action == "2":
         print("Still working on this function")
-        prompt()
+        prompt(test)
     elif action == "Quit" or action == "4":
         print("Exiting program")
     else:
         print("Invalid command")
-        prompt()
+        prompt(test)
 
-def satisfyConstraints(test, my_classes, schedule, scheduleWords, className, classHour):
+def satisfyConstraints(my_classes, schedule, scheduleWords, className, classHour):
     # Variables 
     variables = [(i, j) for i in range(7) for j in range(24)] 
 
@@ -209,10 +195,11 @@ def satisfyConstraints(test, my_classes, schedule, scheduleWords, className, cla
         elif (sol[i,j] == 0):
             scheduleWords[i][j] = " "
         solution[i][j]=sol[i,j] 
-    #final = Week(scheduleWords)
-    #final.printWeek()  
-    for row in scheduleWords:
-        print(row)
+    final = Week(scheduleWords)
+    final.printWeek(0)  
+    return final
+    #for row in scheduleWords:
+        #print(row)
 
 
 def convertTime(time):
@@ -260,7 +247,7 @@ my_classes = Classes()
 my_classes.display_classes()
 my_blockers = Blockers()
 my_blockers.display_schedule()
-test = Week()
+#test = Week()
 #satisfyConstraints(test, my_classes)
 
 
@@ -340,5 +327,5 @@ for num in my_classes.classes:
      className.append(num['name'])
      classHour.append(num['study_hours'])
 
-satisfyConstraints(test, my_classes, schedule, scheduleWords, className, classHour)
-prompt(test)
+final = satisfyConstraints(my_classes, schedule, scheduleWords, className, classHour)
+prompt(final)

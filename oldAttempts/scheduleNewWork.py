@@ -136,36 +136,18 @@ class CSP:
 		ordered_values = greater_than_five + other_values
 		
 		return ordered_values
-
+     
 	def is_consistent(self, var, value, assignment):
         # Copy the assignment into a new one and add in the value
 		updated = assignment.copy()
 		updated[var] = value
 
-		# Calculate total study hours assigned for the specific day
-		day_of_assignment = var[0]  # Get the day of the current assignment
-		total_study_hours = sum(1 for (day, hour) in updated.keys() if day == day_of_assignment and updated[(day, hour)] >= 5)
-		total_limit = 0
-		#if value != 0 and (((var[0], var[1]-1) in updated and updated[(var[0], var[1]-1)] <= 4) or ((var[0], var[1]+1) in updated and updated[(var[0], var[1]+1)] <= 4)):
-			#return False
-                           
         # Go over each class hour
 		for index, limit in enumerate(self.classHour):
 			class_hour_count = sum(1 for assigned_value in updated.values() if assigned_value == (index + 5))
-			class_hour_countDay = sum(1 for (day, hour) in updated.keys() if day == day_of_assignment and updated[(day, hour)] == (index + 5))
-			total_limit += limit			
 			if class_hour_count > limit:
 				return False
-			if limit < 5 and class_hour_countDay > 1:
-				return False
-			elif class_hour_countDay > ((limit // 5)+1):
-				return False
-		if total_limit < 5:
-			if total_study_hours > 2:
-				return False  
-		else:
-			if total_study_hours > ((total_limit // 5)+1):
-				return False  
+
 		return True
 
 

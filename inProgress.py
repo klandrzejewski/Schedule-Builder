@@ -136,7 +136,60 @@ class CSP:
 		ordered_values = greater_than_five + other_values
 		
 		return ordered_values
+     
+	def is_consistent2(self, var, value, assignment):
+        # Copy the assignment into a new one and add in the value
+		updated = assignment.copy()
+		updated[var] = value
 
+        # Calculate total study hours assigned
+		total_study_hours = sum(1 for assigned_value in updated.values() if assigned_value >= 5)
+
+        # Calculate study hours per day
+		study_hours_per_day = total_study_hours // 7
+
+        # Initialize study hours counter for each day
+		study_hours_per_day_counter = [0] * 7
+
+        # Go over each assigned hour and distribute the study hours among the days
+		for hour_tuple, assigned_value in updated.items():
+			if assigned_value >= 5:
+				hour = hour_tuple[1] 
+				day = hour // 24  # Calculate the day index
+				study_hours_per_day_counter[day] += 1
+
+        # Check if the study hours for each day exceed the limit
+		for study_hours in study_hours_per_day_counter:
+			if study_hours > study_hours_per_day:
+				return False
+        
+		return True
+
+	def is_consistent3(self, var, value, assignment):
+        # Copy the assignment into a new one and add in the value
+		updated = assignment.copy()
+		updated[var] = value
+
+		total_study_hours = sum(1 for assigned_value in updated.values() if assigned_value >= 5)
+		total_limit = 0        
+        # Go over each class hour
+		for index, limit in enumerate(self.classHour):
+			class_hour_count = sum(1 for assigned_value in updated.values() if assigned_value == (index + 5))
+			total_limit += limit			
+			if class_hour_count > limit:
+				return False
+			if limit < 5 and class_hour_count > 1:
+				return False
+			elif class_hour_count > (limit // 5):
+				return False
+		if total_limit < 5:
+			if total_study_hours > 2:
+				return False  
+		else:
+			if total_study_hours > (total_limit // 5):
+				return False  
+		return True
+     
 	def is_consistent(self, var, value, assignment):
         # Copy the assignment into a new one and add in the value
 		updated = assignment.copy()

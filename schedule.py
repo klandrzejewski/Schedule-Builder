@@ -168,25 +168,34 @@ class CSP:
 				return False  
 		return True
 
+def editSchedule(words, nums, my_classes, schedule, scheduleWords, className, classHour):
+    for i,j in nums:
+        if nums[i, j] >= 5:
+            schedule[i][j] = 4
+            scheduleWords[i][j] = ""
+    final, nums = satisfyConstraints(my_classes, schedule, scheduleWords, className, classHour)
+    return final, nums
+    
 
-def prompt(test):
+
+def prompt(test, nums, my_classes, schedule, scheduleWords, className, classHour):
     print(" ")
     print("Choose an action:")
-    action = input("(1) Edit Timeslots    (2) Provide Feedback    (3) Print Schedule to File   (4) Quit \n\n")
+    action = input("(1) Edit Timeslots    (2) Generate New Schedule    (3) Print Schedule to File   (4) Quit \n\n")
     if action == "Print Schedule" or action == "3":
         test.printWeek(1)
-        prompt(test)
+        prompt(test, nums, my_classes, schedule, scheduleWords, className, classHour)
     elif action == "Edit Timeslots" or action == "1":
         test.edit()
-        prompt(test)
-    elif action == "Provide Feedback" or action == "2":
-        print("Still working on this function")
-        prompt(test)
+        prompt(test, nums, my_classes, schedule, scheduleWords, className, classHour)
+    elif action == "Generate New Schedule" or action == "2":
+        test, nums = editSchedule(test, nums, my_classes, schedule, scheduleWords, className, classHour)
+        prompt(test, nums, my_classes, schedule, scheduleWords, className, classHour)
     elif action == "Quit" or action == "4":
         print("Exiting program")
     else:
         print("Invalid command")
-        prompt(test)
+        prompt(test, nums, my_classes, schedule, scheduleWords, className, classHour)
 
 def satisfyConstraints(my_classes, schedule, scheduleWords, className, classHour):
     # Variables 
@@ -215,7 +224,7 @@ def satisfyConstraints(my_classes, schedule, scheduleWords, className, classHour
         solution[i][j]=sol[i,j] 
     final = Week(scheduleWords)
     final.printWeek(0)  
-    return final
+    return final, sol
     #for row in scheduleWords:
         #print(row)
 
@@ -345,5 +354,5 @@ for num in my_classes.classes:
      className.append(num['name'])
      classHour.append(num['study_hours'])
 
-final = satisfyConstraints(my_classes, schedule, scheduleWords, className, classHour)
-prompt(final)
+final, nums = satisfyConstraints(my_classes, schedule, scheduleWords, className, classHour)
+prompt(final, nums, my_classes, schedule, scheduleWords, className, classHour)

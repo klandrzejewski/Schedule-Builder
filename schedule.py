@@ -143,13 +143,14 @@ class CSP:
 		updated[var] = value
 
 		# Calculate total study hours assigned for the specific day
-		day_of_assignment = var[0]  # Get the day of the current assignment
+		day_of_assignment = var[0] 
 		total_study_hours = sum(1 for (day, hour) in updated.keys() if day == day_of_assignment and updated[(day, hour)] >= 5)
 		total_limit = 0
+          
 		#if value != 0 and (((var[0], var[1]-1) in updated and updated[(var[0], var[1]-1)] <= 4) or ((var[0], var[1]+1) in updated and updated[(var[0], var[1]+1)] <= 4)):
 			#return False
                            
-        # Go over each class hour
+        # Go over each class hour to ensure the limit is not 
 		for index, limit in enumerate(self.classHour):
 			class_hour_count = sum(1 for assigned_value in updated.values() if assigned_value == (index + 5))
 			class_hour_countDay = sum(1 for (day, hour) in updated.keys() if day == day_of_assignment and updated[(day, hour)] == (index + 5))
@@ -201,7 +202,8 @@ def satisfyConstraints(my_classes, schedule, scheduleWords, className, classHour
     # Variables 
     variables = [(i, j) for i in range(7) for j in range(24)] 
     with open("variables.txt", "w") as file:
-                file.write(variables)
+                for var in variables:
+                    file.write(str(var) + '\n')
 
     classNum = my_classes.numClass + 5
 
@@ -210,7 +212,8 @@ def satisfyConstraints(my_classes, schedule, scheduleWords, className, classHour
                             else {schedule[var[0]][var[1]]} for var in variables}
 
     with open("domain.txt", "w") as file:
-                file.write(Domains) 
+                for key, value in Domains.items():
+                    file.write(f"{key}: {value}\n")
 
     # Store how long to study for each class
     classHours = []

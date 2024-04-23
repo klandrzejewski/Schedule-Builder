@@ -200,12 +200,17 @@ def prompt(test, nums, my_classes, schedule, scheduleWords, className, classHour
 def satisfyConstraints(my_classes, schedule, scheduleWords, className, classHour):
     # Variables 
     variables = [(i, j) for i in range(7) for j in range(24)] 
+    with open("variables.txt", "w") as file:
+                file.write(variables)
 
     classNum = my_classes.numClass + 5
 
     # Domains: sleep = 1, work = 2, class = 3, other = 4, study = 5+ set(range(5, classNum+1)) 
     Domains = {var: set(range(5, classNum)) | set([0]) if schedule[var[0]][var[1]] == 0
-                            else {schedule[var[0]][var[1]]} for var in variables} 
+                            else {schedule[var[0]][var[1]]} for var in variables}
+
+    with open("domain.txt", "w") as file:
+                file.write(Domains) 
 
     # Store how long to study for each class
     classHours = []
